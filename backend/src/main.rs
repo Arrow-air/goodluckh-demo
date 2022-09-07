@@ -42,6 +42,9 @@ static ARROW_INTERSTATE_CONSTRAINT: f32 = 100.0;
 /// Returns a list of nodes near the given location
 pub async fn get_nearby_nodes(req: Json<NearbyLocationQuery>) -> HttpResponse {
     unsafe {
+        ARROW_XL_ROUTER = None;
+        ARROW_CARGO_ROUTER = None;
+        ARROW_INTERSTATE_ROUTER = None;
         NODES = Some(generate_nodes_near(&req.location, req.radius, req.capacity));
         return HttpResponse::Ok().json(NODES.as_ref().unwrap());
     };
@@ -85,6 +88,11 @@ pub async fn init_router(req: Json<Aircraft>) -> HttpResponse {
 
     match req.into_inner() {
         Aircraft::ArrowXl => unsafe {
+            if ARROW_XL_ROUTER.is_some() {
+                return HttpResponse::Ok().body(
+                    "Router already initialized. Try to use the router instead of initializing it.",
+                );
+            }
             ARROW_XL_ROUTER = Some(Router::new(
                 &NODES.as_ref().unwrap(),
                 ARROW_XL_CONSTRAINT,
@@ -94,6 +102,11 @@ pub async fn init_router(req: Json<Aircraft>) -> HttpResponse {
             return HttpResponse::Ok().body("Arrow XL router initialized.");
         },
         Aircraft::ArrowCargo => unsafe {
+            if ARROW_CARGO_ROUTER.is_some() {
+                return HttpResponse::Ok().body(
+                    "Router already initialized. Try to use the router instead of initializing it.",
+                );
+            }
             ARROW_CARGO_ROUTER = Some(Router::new(
                 &NODES.as_ref().unwrap(),
                 ARROW_CARGO_CONSTRAINT,
@@ -103,6 +116,11 @@ pub async fn init_router(req: Json<Aircraft>) -> HttpResponse {
             return HttpResponse::Ok().body("Arrow Cargo router initialized.");
         },
         Aircraft::ArrowInterstate => unsafe {
+            if ARROW_INTERSTATE_ROUTER.is_some() {
+                return HttpResponse::Ok().body(
+                    "Router already initialized. Try to use the router instead of initializing it.",
+                );
+            }
             ARROW_INTERSTATE_ROUTER = Some(Router::new(
                 &NODES.as_ref().unwrap(),
                 ARROW_INTERSTATE_CONSTRAINT,
@@ -156,7 +174,7 @@ pub async fn get_route(req: Json<RouteQuery>) -> HttpResponse {
             let (_, path) = ARROW_XL_ROUTER.as_ref().unwrap().find_shortest_path(
                 &from,
                 &to,
-                Algorithm::AStar,
+                Algorithm::Dijkstra,
                 None,
             );
             let locations = path
@@ -184,7 +202,7 @@ pub async fn get_route(req: Json<RouteQuery>) -> HttpResponse {
             let (_, path) = ARROW_CARGO_ROUTER.as_ref().unwrap().find_shortest_path(
                 &from,
                 &to,
-                Algorithm::AStar,
+                Algorithm::Dijkstra,
                 None,
             );
             let locations = path
@@ -212,7 +230,7 @@ pub async fn get_route(req: Json<RouteQuery>) -> HttpResponse {
             let (_, path) = ARROW_INTERSTATE_ROUTER
                 .as_ref()
                 .unwrap()
-                .find_shortest_path(&from, &to, Algorithm::AStar, None);
+                .find_shortest_path(&from, &to, Algorithm::Dijkstra, None);
             let locations = path
                 .iter()
                 .map(|node_idx| {

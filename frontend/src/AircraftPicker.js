@@ -5,8 +5,11 @@ function AircraftPicker(props) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!props.routerInitialized && props.nodes != null) {
-            console.log("hello");
+        if (
+            !props.routerInitialized &&
+            props.nodes != null &&
+            props.activeType === props.aircraftType
+        ) {
             setLoading(true);
             //fetch from is_router_initialized end point of port 8000 with post method
             fetch("http://localhost:8000/init-router", {
