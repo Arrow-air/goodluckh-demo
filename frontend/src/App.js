@@ -1,30 +1,14 @@
 import "./App.css";
 import React, { useState } from "react";
-import { MapContainer, TileLayer, CircleMarker, Polyline } from "react-leaflet";
-import { Box, Button, Slide, Text } from "@chakra-ui/react";
-import AircraftPicker from "./AircraftPicker";
+import { Box, Button, Slide } from "@chakra-ui/react";
+import { AircraftSelectionPane } from "./components/AircraftSelectionPane";
+import MapView from "./components/MapView";
 
 const SAN_FRANCISCO = {
     latitude: 37.7749,
     longitude: -122.4194,
     altitude_meters: 0,
 };
-
-const blackOptions = { color: "black" };
-const edgeOptions = {
-    color: "gray",
-    weight: 1,
-    opacity: 0.6,
-    smoothFactor: 1,
-};
-const routeOptions = {
-    color: "black",
-    weight: 5,
-    opacity: 0.7,
-    smoothFactor: 1,
-};
-const redOptions = { color: "red" };
-const blueOptions = { color: "blue" };
 
 function App() {
     const [nodes, setNodes] = useState(null);
@@ -125,47 +109,17 @@ function App() {
                     direction="left"
                     in
                 >
-                    <Box
-                        roundedRight="2xl"
-                        boxShadow="dark-lg"
-                        bgColor="rgba(244, 244, 244)"
-                        p={2}
-                    >
-                        <Text as="b" fontSize="xl" pt={20}>
-                            Choose an Aircraft
-                        </Text>
-                        <AircraftPicker
-                            imageUrl="arrow-xl.png"
-                            title="Arrow XL"
-                            body="Good for short range flights"
-                            aircraftType="ArrowXl"
-                            activeType={activeType}
-                            onClick={onPickAircraft}
-                            setEdges={onSetEdges}
-                            routerInitialized={routerInitialized}
-                            setRouterInitialized={onRouterInitialized}
-                            nodes={nodes}
-                            src={src}
-                            dst={dst}
-                            getRoute={getRoute}
-                        />
-
-                        <AircraftPicker
-                            imageUrl="arrow-cargo.png"
-                            title="Arrow Cargo"
-                            body="Good for mid range flights with heavy payloads"
-                            aircraftType="ArrowCargo"
-                            activeType={activeType}
-                            onClick={onPickAircraft}
-                            setEdges={onSetEdges}
-                            routerInitialized={routerInitialized}
-                            setRouterInitialized={onRouterInitialized}
-                            nodes={nodes}
-                            src={src}
-                            dst={dst}
-                            getRoute={getRoute}
-                        />
-                    </Box>
+                    <AircraftSelectionPane
+                        activeType={activeType}
+                        onPickAircraft={onPickAircraft}
+                        onSetEdges={onSetEdges}
+                        routerInitialized={routerInitialized}
+                        onRouterInitialized={onRouterInitialized}
+                        nodes={nodes}
+                        src={src}
+                        dst={dst}
+                        getRoute={getRoute}
+                    />
                 </Slide>
 
                 <Box
@@ -189,68 +143,15 @@ function App() {
                         Get nearby nodes
                     </Button>
                 </Box>
-                <MapContainer
-                    center={[SAN_FRANCISCO.latitude, SAN_FRANCISCO.longitude]}
-                    zoom={13}
-                    scrollWheelZoom
-                    id="map"
-                >
-                    <TileLayer url="https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}{r}.png" />
-                    {route != null && (
-                        <Polyline
-                            pathOptions={routeOptions}
-                            positions={route.map((r) => [
-                                r.latitude,
-                                r.longitude,
-                            ])}
-                        />
-                    )}
-                    {nodes != null &&
-                        nodes.map((node) => (
-                            <CircleMarker
-                                center={[
-                                    node.location.latitude,
-                                    node.location.longitude,
-                                ]}
-                                eventHandlers={{
-                                    click: (e) => onMarkerClick(e),
-                                }}
-                                pathOptions={
-                                    src && src.uid === node.uid
-                                        ? redOptions
-                                        : dst && dst.uid === node.uid
-                                        ? blueOptions
-                                        : blackOptions
-                                }
-                                radius={
-                                    src && src.uid === node.uid
-                                        ? 10
-                                        : dst && dst.uid === node.uid
-                                        ? 10
-                                        : 5
-                                }
-                                nodeId={node.uid}
-                                key={node.uid}
-                            />
-                        ))}
-                    {
-                        <Polyline
-                            positions={edges
-                                .map((edge) => [
-                                    [
-                                        edge.from.location.latitude,
-                                        edge.from.location.longitude,
-                                    ],
-                                    [
-                                        edge.to.location.latitude,
-                                        edge.to.location.longitude,
-                                    ],
-                                ])
-                                .flat()}
-                            pathOptions={edgeOptions}
-                        />
-                    }
-                </MapContainer>
+                <MapView
+                    centerLocation={SAN_FRANCISCO}
+                    nodes={nodes}
+                    route={route}
+                    onMarkerClick={onMarkerClick}
+                    src={src}
+                    dst={dst}
+                    edges={edges}
+                />
             </div>
         </div>
     );
